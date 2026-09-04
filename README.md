@@ -62,3 +62,32 @@ Ingen brug af `task:get_symbols()` eller `task:get_results()`.
 ## Installation
 
 ### 1. Lua‑fil
+/etc/rspamd/lua.local.d/org_phishing.lua
+
+### 2. groups.conf
+/etc/rspamd/local.d/groups.conf
+
+### 3. Test
+rspamadm configtest
+
+### 4. Genstart
+systemctl restart rspamd
+
+---
+
+## Licens
+
+MIT License.
+
+---
+
+## Bidrag
+
+Pull requests er velkomne.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+
