@@ -1,0 +1,51 @@
+# Changelog – EasyPark Brand Detection
+Alle væsentlige ændringer relateret til EasyPark‑brandet i ORG_PHISHING‑modulet.
+
+## [1.0.3] – 2026‑09‑04
+### Added
+- Udvidet brand‑match til at understøtte alle variationer af EasyPark:
+  - `easy[%s%-]*park` matcher nu:
+    - EasyPark  
+    - EASY PARK  
+    - Easy‑Park  
+    - Easy Park Support  
+    - EasyPark Billing  
+- Tilføjet nye URL‑patterns for EasyPark‑phishing:
+  - `easypark-secure`
+  - `easypark-payment`
+  - `easypark-verify`
+  - `easypark-login`
+  - `easypark-billing`
+- Tilføjet SES‑relaterede phishing‑patterns:
+  - `miportal-ggs`
+  - `amazonses`
+
+### Improved
+- Display‑name heuristik er nu case‑insensitive og tolerant over for mellemrum og bindestreger.
+- EasyPark urgency‑mønstre er bevaret og udvidet for bedre match på betalingssvindel.
+- DKIM‑policy for EasyPark er nu kategoriseret som **low‑risk**, men stadig aktiv ved fail/none.
+
+### Fixed
+- EasyPark‑phishing sendt via Amazon SES blev ikke fanget korrekt.
+  - Problem: legitime SES‑hosts + falske domæner som `miportal-ggs.com`.
+  - Løsning: nye URL‑patterns + tolerant brand‑match.
+- Display‑name “EasyPark” blev kun matchet i én strengform.
+- Phishing‑mails med obfuskeret subject (fx “P=?UTF‑8?...”) blev nu korrekt matchet via urgency‑mønstre.
+
+---
+
+## [1.0.2] – 2026‑09‑03
+### Added
+- Første version af EasyPark‑brandet:
+  - Display‑name match: `easypark`
+  - Domæne‑whitelist for legitime EasyPark‑domæner
+  - Grundlæggende urgency‑mønstre for parkeringsbetaling
+
+---
+
+## [1.0.1] – 2026‑09‑02
+### Added
+- Initial brand‑struktur for modul
+- DKIM‑policy framework
+- URL‑heuristik framework
+
