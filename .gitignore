@@ -1,0 +1,17 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE junk
+.vscode/
+.idea/
+
+# Rspamd cache (hvis nogen kloner direkte ind i /etc/rspamd)
+Cache/
+Logs/
+WTF/
+
+# Archive files
+*.zip
+*.tar.gz
+*.7z
