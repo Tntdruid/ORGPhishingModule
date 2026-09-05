@@ -46,7 +46,7 @@ rspamd_config:register_symbol({
       ORG_POSTNORD   = { "postnord.dk","postnord.se","postnord.com","postnord.no","postnord.fi" },
       ORG_DHL        = { "dhl.com","dhl.de","dhl.dk","dhl.se","dhl.fi","dhl.no" },
       ORG_GLS        = { "gls.dk","gls.eu","gls-group.eu" },
-      ORG_EASYPARK   = { "easypark.net","easypark.dk","easypark.se","easypark.no","easypark.fi","easyparkapp.com" },
+      ORG_EASYPARK   = { "easypark.net","easypark.dk","easypark.se","easypark.no","easypark.fi","easyparkapp.com","easyparkgroup.com" },
       ORG_SKAT       = { "skat.dk","virk.dk","borger.dk","nemlogin.dk","mitid.dk" },
       ORG_BROBIZZ    = { "brobizz.dk","brobizz.com","brobizz.no","brobizz.se" },
       ORG_MOBILEPAY  = { "mobilepay.dk","mobilepay.fi","mobilepay.no","mobilepay.se" },
@@ -64,7 +64,16 @@ rspamd_config:register_symbol({
 
       -- NEW BRANDS
       ORG_PUNKTUM    = { "punktum.dk" },
-      ORG_SYGEFORSIKRING = { "sygeforsikring.dk","danmark.dk" }
+      ORG_SYGEFORSIKRING = { "sygeforsikring.dk","danmark.dk" },
+
+      -- Netflix
+      ORG_NETFLIX = {
+        "netflix.com",
+        "netflix.net",
+        "nflxext.com",
+        "nflximg.com",
+        "nflxvideo.net"
+      }
     }
 
     ----------------------------------------------------------------------
@@ -84,7 +93,10 @@ rspamd_config:register_symbol({
       { pat = "postnord",        sym = "ORG_POSTNORD" },
       { pat = "dhl",             sym = "ORG_DHL" },
       { pat = "gls",             sym = "ORG_GLS" },
-      { pat = "easypark",        sym = "ORG_EASYPARK" },
+
+      -- EasyPark: tolerant for spaces/hyphens/case
+      { pat = "easy[%s%-]*park", sym = "ORG_EASYPARK" },
+
       { pat = "skat",            sym = "ORG_SKAT" },
       { pat = "skattestyrelsen", sym = "ORG_SKAT" },
       { pat = "brobizz",         sym = "ORG_BROBIZZ" },
@@ -104,7 +116,10 @@ rspamd_config:register_symbol({
       -- NEW BRANDS
       { pat = "punktum",         sym = "ORG_PUNKTUM" },
       { pat = "sygeforsikring",  sym = "ORG_SYGEFORSIKRING" },
-      { pat = "danmark",         sym = "ORG_SYGEFORSIKRING" }
+      { pat = "danmark",         sym = "ORG_SYGEFORSIKRING" },
+
+      -- Netflix
+      { pat = "netflix",         sym = "ORG_NETFLIX" }
     }
 
     ----------------------------------------------------------------------
@@ -122,13 +137,34 @@ rspamd_config:register_symbol({
     end
 
     ----------------------------------------------------------------------
-    -- 2) URL phishing heuristics
+    -- 2) URL phishing heuristics (incl. EasyPark + SES + Netflix)
     ----------------------------------------------------------------------
     local urls = task:get_urls() or {}
     local bad_patterns = {
-      "postnord","dhl","gls","easypark","skat","brobizz","mobilepay","e%-boks",
-      "mitid","nemid","nets","tdc","telia","yousee","posten","bring","ups","fedex",
+      "postnord","dhl","gls",
+      "easy[%s%-]*park",
+      "easypark%-secure",
+      "easypark%-payment",
+      "easypark%-verify",
+      "easypark%-login",
+      "easypark%-billing",
+      "miportal%-ggs",
+      "amazonses",
+
+      "skat","brobizz","mobilepay","e%-boks",
+      "mitid","nemid","nets","tdc","telia","yousee",
+      "posten","bring","ups","fedex",
       "punktum","sygeforsikring","danmark",
+
+      -- Netflix patterns
+      "netflix",
+      "netflix%-secure",
+      "netflix%-billing",
+      "netflix%-update",
+      "netflix%-verify",
+      "netflix%-login",
+      "nflx",
+
       "secure","verify","betaling","refund","update","login","track","delivery"
     }
 
@@ -161,13 +197,14 @@ rspamd_config:register_symbol({
       local critical = {
         ORG_SKAT = true, ORG_MITID = true, ORG_NEMID = true,
         ORG_MOBILEPAY = true, ORG_EBOKS = true, ORG_NETS = true,
-        ORG_SYGEFORSIKRING = true  -- health/identity sensitive
+        ORG_SYGEFORSIKRING = true
       }
 
       local medium = {
         ORG_POSTNORD = true, ORG_DHL = true, ORG_GLS = true,
         ORG_BRING = true, ORG_UPS = true, ORG_FEDEX = true, ORG_POSTA = true,
-        ORG_PUNKTUM = true  -- domain registrar, medium risk
+        ORG_PUNKTUM = true,
+        ORG_NETFLIX = true
       }
 
       local low = {
@@ -301,6 +338,18 @@ rspamd_config:register_symbol({
         ORG_YOUSEE = {
           "yousee betaling mangler",
           "yousee konto låst"
+        },
+
+        ORG_NETFLIX = {
+          "din netflix betaling er afvist",
+          "netflix betaling mangler",
+          "din netflix konto er låst",
+          "bekræft din netflix konto",
+          "netflix abonnement udløber",
+          "netflix subscription expired",
+          "update your netflix payment",
+          "verify your netflix account",
+          "issue with your netflix payment method"
         }
       }
 
