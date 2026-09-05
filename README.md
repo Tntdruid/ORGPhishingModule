@@ -90,6 +90,56 @@ MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction...
+# Changelog – Netflix Brand Detection
+Alle væsentlige ændringer relateret til Netflix‑brandet i ORG_PHISHING‑modulet.
+
+## [1.0.4] – 2026‑09‑05
+### Added
+- Fuldt Netflix‑brandmatch via:
+  - `netflix`
+  - tolerant match for obfuskerede navne (fx “NetfIix” med stort I)
+- Tilføjet legitime Netflix‑domæner:
+  - netflix.com
+  - netflix.net
+  - nflxext.com
+  - nflximg.com
+  - nflxvideo.net
+- Udvidet URL‑heuristik med Netflix‑phishing patterns:
+  - `netflix-secure`
+  - `netflix-billing`
+  - `netflix-update`
+  - `netflix-verify`
+  - `netflix-login`
+  - `nflx`
+- Tilføjet urgency‑mønstre for betalingssvindel:
+  - “din netflix betaling er afvist”
+  - “netflix betaling mangler”
+  - “din netflix konto er låst”
+  - “netflix subscription expired”
+  - “update your netflix payment”
+  - “verify your netflix account”
+  - “issue with your netflix payment method”
+- Tilføjet DKIM‑policy for Netflix som **medium‑risk** brand.
+
+### Improved
+- Display‑name match er nu case‑insensitive og fanger obfuskerede Netflix‑navne.
+- URL‑scanning fanger nu både SES‑hostede og custom Netflix‑phishing domæner.
+- Urgency‑detektion forbedret for engelske og danske betalingsadvarsler.
+
+### Fixed
+- Netflix‑phishing med emnelinjer som:
+  - “Important: Issue with your NetfIix payment method lD‑5544602996”
+  blev tidligere ikke fanget korrekt.
+- Mails med falske Netflix‑ID‑numre (fx “ID‑5544602996”) bliver nu korrekt markeret som phishing.
+- Netflix‑phishing sendt via Amazon SES blev ikke matchet af URL‑heuristik — løst via nye patterns.
+
+---
+
+## [1.0.3] – 2026‑09‑04
+### Added
+- Forberedelse af Netflix‑integration i brand‑strukturen.
+- Grundlæggende URL‑patterns for streaming‑tjenester.
+
 
 # Changelog – EasyPark Brand Detection
 Alle væsentlige ændringer relateret til EasyPark‑brandet i ORG_PHISHING‑modulet.
