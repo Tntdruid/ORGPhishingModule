@@ -62,17 +62,16 @@ rspamd_config:register_symbol({
       ORG_UPS        = { "ups.com","ups.dk","ups.se","ups.no","ups.fi" },
       ORG_FEDEX      = { "fedex.com","fedex.dk","fedex.se","fedex.no","fedex.fi" },
 
-      -- NEW BRANDS
       ORG_PUNKTUM    = { "punktum.dk" },
       ORG_SYGEFORSIKRING = { "sygeforsikring.dk","danmark.dk" },
 
-      -- Netflix
       ORG_NETFLIX = {
-        "netflix.com",
-        "netflix.net",
-        "nflxext.com",
-        "nflximg.com",
-        "nflxvideo.net"
+        "netflix.com","netflix.net","nflxext.com","nflximg.com","nflxvideo.net"
+      },
+
+      -- One.com
+      ORG_ONECOM = {
+        "one.com","one.dk","one.net","onecloud.com"
       }
     }
 
@@ -94,7 +93,6 @@ rspamd_config:register_symbol({
       { pat = "dhl",             sym = "ORG_DHL" },
       { pat = "gls",             sym = "ORG_GLS" },
 
-      -- EasyPark: tolerant for spaces/hyphens/case
       { pat = "easy[%s%-]*park", sym = "ORG_EASYPARK" },
 
       { pat = "skat",            sym = "ORG_SKAT" },
@@ -113,13 +111,14 @@ rspamd_config:register_symbol({
       { pat = "ups",             sym = "ORG_UPS" },
       { pat = "fedex",           sym = "ORG_FEDEX" },
 
-      -- NEW BRANDS
       { pat = "punktum",         sym = "ORG_PUNKTUM" },
       { pat = "sygeforsikring",  sym = "ORG_SYGEFORSIKRING" },
       { pat = "danmark",         sym = "ORG_SYGEFORSIKRING" },
 
-      -- Netflix
-      { pat = "netflix",         sym = "ORG_NETFLIX" }
+      { pat = "netflix",         sym = "ORG_NETFLIX" },
+
+      -- One.com
+      { pat = "one[%s%-]*com",   sym = "ORG_ONECOM" }
     }
 
     ----------------------------------------------------------------------
@@ -137,33 +136,30 @@ rspamd_config:register_symbol({
     end
 
     ----------------------------------------------------------------------
-    -- 2) URL phishing heuristics (incl. EasyPark + SES + Netflix)
+    -- 2) URL phishing heuristics (incl. EasyPark + SES + Netflix + One.com)
     ----------------------------------------------------------------------
     local urls = task:get_urls() or {}
     local bad_patterns = {
       "postnord","dhl","gls",
       "easy[%s%-]*park",
-      "easypark%-secure",
-      "easypark%-payment",
-      "easypark%-verify",
-      "easypark%-login",
-      "easypark%-billing",
-      "miportal%-ggs",
-      "amazonses",
+      "easypark%-secure","easypark%-payment","easypark%-verify","easypark%-login","easypark%-billing",
+      "miportal%-ggs","amazonses",
 
       "skat","brobizz","mobilepay","e%-boks",
       "mitid","nemid","nets","tdc","telia","yousee",
       "posten","bring","ups","fedex",
       "punktum","sygeforsikring","danmark",
 
-      -- Netflix patterns
-      "netflix",
-      "netflix%-secure",
-      "netflix%-billing",
-      "netflix%-update",
-      "netflix%-verify",
-      "netflix%-login",
-      "nflx",
+      "netflix","netflix%-secure","netflix%-billing","netflix%-update","netflix%-verify","netflix%-login","nflx",
+
+      -- One.com
+      "one[%s%-]*com",
+      "onecom%-secure",
+      "onecom%-billing",
+      "onecom%-update",
+      "onecom%-verify",
+      "onecom%-login",
+      "one%-com",
 
       "secure","verify","betaling","refund","update","login","track","delivery"
     }
@@ -179,7 +175,7 @@ rspamd_config:register_symbol({
     end
 
     ----------------------------------------------------------------------
-    -- 3) Brand‑specifik DKIM policy (Rspamd 4.1.5 safe)
+    -- 3) Brand‑specifik DKIM policy
     ----------------------------------------------------------------------
     local dkim = task:get_symbol("DKIM_TRACE") or {}
     local dkim_status = nil
@@ -204,7 +200,8 @@ rspamd_config:register_symbol({
         ORG_POSTNORD = true, ORG_DHL = true, ORG_GLS = true,
         ORG_BRING = true, ORG_UPS = true, ORG_FEDEX = true, ORG_POSTA = true,
         ORG_PUNKTUM = true,
-        ORG_NETFLIX = true
+        ORG_NETFLIX = true,
+        ORG_ONECOM = true
       }
 
       local low = {
@@ -225,131 +222,97 @@ rspamd_config:register_symbol({
     end
 
     ----------------------------------------------------------------------
-    -- 4) Brand-specifik urgency patterns (SKAT fjernet)
+    -- 4) Brand-specifik urgency patterns
     ----------------------------------------------------------------------
     if matched_brand then
       local urgency_patterns = {
 
         ORG_MITID = {
-          "dit mitid er spærret",
-          "dit mitid er låst",
-          "mitid er midlertidigt deaktiveret",
-          "bekræft din identitet",
-          "verificer din mitid konto",
-          "log ind med mitid"
+          "dit mitid er spærret","dit mitid er låst","mitid er midlertidigt deaktiveret",
+          "bekræft din identitet","verificer din mitid konto","log ind med mitid"
         },
 
         ORG_NEMID = {
-          "dit nemid er spærret",
-          "dit nemid er udløbet",
-          "nemid nøgle mangler",
-          "bekræft dit nemid",
-          "log ind med nemid"
+          "dit nemid er spærret","dit nemid er udløbet","nemid nøgle mangler",
+          "bekræft dit nemid","log ind med nemid"
         },
 
         ORG_MOBILEPAY = {
-          "din mobilepay betaling er afvist",
-          "mobilepay betaling mangler",
-          "mobilepay konto låst",
-          "verificer din mobilepay konto",
-          "bekræft betaling i mobilepay"
+          "din mobilepay betaling er afvist","mobilepay betaling mangler","mobilepay konto låst",
+          "verificer din mobilepay konto","bekræft betaling i mobilepay"
         },
 
         ORG_EBOKS = {
-          "ny besked i e%-boks",
-          "vigtig besked i e%-boks",
-          "din e%-boks konto er låst",
-          "log ind i e%-boks",
-          "bekræft din e%-boks identitet"
+          "ny besked i e%-boks","vigtig besked i e%-boks","din e%-boks konto er låst",
+          "log ind i e%-boks","bekræft din e%-boks identitet"
         },
 
         ORG_NETS = {
-          "nets betaling afvist",
-          "nets sikkerhedsopdatering",
-          "verificer nets konto",
-          "bekræft nets betaling"
+          "nets betaling afvist","nets sikkerhedsopdatering","verificer nets konto","bekræft nets betaling"
         },
 
         ORG_POSTNORD = {
-          "din pakke er på vej",
-          "spor din pakke",
-          "leveringsproblem",
-          "din pakke er tilbageholdt",
-          "betaling påkrævet for levering"
+          "din pakke er på vej","spor din pakke","leveringsproblem",
+          "din pakke er tilbageholdt","betaling påkrævet for levering"
         },
 
         ORG_DHL = {
-          "dhl levering forsinket",
-          "dhl tracking opdatering",
-          "dhl betaling mangler",
-          "dhl shipment on hold"
+          "dhl levering forsinket","dhl tracking opdatering","dhl betaling mangler","dhl shipment on hold"
         },
 
         ORG_GLS = {
-          "gls pakke tilbageholdt",
-          "gls levering mislykkedes",
-          "gls tracking opdatering"
+          "gls pakke tilbageholdt","gls levering mislykkedes","gls tracking opdatering"
         },
 
         ORG_BRING = {
-          "bring levering forsinket",
-          "bring pakke tilbageholdt"
+          "bring levering forsinket","bring pakke tilbageholdt"
         },
 
         ORG_POSTA = {
-          "posten levering forsinket",
-          "posten pakke tilbageholdt"
+          "posten levering forsinket","posten pakke tilbageholdt"
         },
 
         ORG_UPS = {
-          "ups delivery on hold",
-          "ups tracking update",
-          "ups payment required"
+          "ups delivery on hold","ups tracking update","ups payment required"
         },
 
         ORG_FEDEX = {
-          "fedex delivery delayed",
-          "fedex shipment on hold",
-          "fedex payment required"
+          "fedex delivery delayed","fedex shipment on hold","fedex payment required"
         },
 
         ORG_EASYPARK = {
-          "din parkering er ugyldig",
-          "betaling for parkering mangler",
-          "verificer din easypark konto"
+          "din parkering er ugyldig","betaling for parkering mangler","verificer din easypark konto"
         },
 
         ORG_BROBIZZ = {
-          "brobizz betaling mangler",
-          "brobizz opdatering påkrævet",
-          "brobizz konto låst"
+          "brobizz betaling mangler","brobizz opdatering påkrævet","brobizz konto låst"
         },
 
         ORG_TDC = {
-          "tdc betaling mangler",
-          "tdc konto låst"
+          "tdc betaling mangler","tdc konto låst"
         },
 
         ORG_TELIA = {
-          "telia betaling mangler",
-          "telia konto låst"
+          "telia betaling mangler","telia konto låst"
         },
 
         ORG_YOUSEE = {
-          "yousee betaling mangler",
-          "yousee konto låst"
+          "yousee betaling mangler","yousee konto låst"
         },
 
         ORG_NETFLIX = {
-          "din netflix betaling er afvist",
-          "netflix betaling mangler",
-          "din netflix konto er låst",
-          "bekræft din netflix konto",
-          "netflix abonnement udløber",
-          "netflix subscription expired",
-          "update your netflix payment",
-          "verify your netflix account",
+          "din netflix betaling er afvist","netflix betaling mangler","din netflix konto er låst",
+          "netflix abonnement udløber","netflix subscription expired",
+          "update your netflix payment","verify your netflix account",
           "issue with your netflix payment method"
+        },
+
+        ORG_ONECOM = {
+          "one.com invoice","one.com faktura","one.com payment",
+          "one.com domain expires","your domain will expire",
+          "domain suspension","verify your one.com account",
+          "update your one.com payment","one.com billing issue",
+          "one.com account suspended"
         }
       }
 
