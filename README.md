@@ -25,7 +25,24 @@ Modulet matcher display‑name, afsenderdomæne, URL‑mønstre, DKIM‑status o
 
 ## Features
 
-### ✔ Understøttede brands
+
+## Understøttede brands
+
+### Danske brands
+- SKAT  
+- MitID  
+- NemID  
+- MobilePay  
+- e‑Boks  
+- Nets  
+- TDC  
+- Telia  
+- YouSee  
+- Punktum.dk  
+- Sygeforsikring Danmark  
+- One.com  
+
+### Levering & logistik
 - PostNord  
 - DHL  
 - GLS  
@@ -33,26 +50,39 @@ Modulet matcher display‑name, afsenderdomæne, URL‑mønstre, DKIM‑status o
 - Posta Norge  
 - UPS  
 - FedEx  
+
+### Transport & betaling
 - EasyPark  
 - BroBizz  
-- MobilePay  
-- e‑Boks  
-- MitID  
-- NemID  
-- Nets  
-- TDC  
-- Telia  
-- YouSee  
-- Punktum.dk  
-- Sygeforsikring Danmark  
 
-### ✔ DKIM‑policy pr. brand
-- Critical: MitID, NemID, MobilePay, e‑Boks, Nets, Sygeforsikring Danmark  
-- Medium: PostNord, DHL, GLS, Bring, UPS, FedEx, Punktum.dk  
-- Low: TDC, Telia, YouSee, EasyPark, BroBizz  
+### Streaming
+- Netflix  
 
-### ✔ URL‑heuristik
-Matcher brand‑relaterede phishing‑URL’er.
+---
+
+## DKIM‑policy pr. brand
+
+**Kritisk:**  
+MitID, NemID, MobilePay, e‑Boks, Nets, Sygeforsikring Danmark
+
+**Medium:**  
+PostNord, DHL, GLS, Bring, UPS, FedEx, Posta, Punktum.dk, Netflix, One.com
+
+**Lav:**  
+TDC, Telia, YouSee, EasyPark, BroBizz
+
+---
+
+## URL‑heuristik
+
+Modulet matcher brand‑relaterede phishing‑URL’er, inkl.:
+
+- EasyPark: `easypark-secure`, `easypark-payment`, `easypark-login`  
+- Netflix: `netflix-billing`, `netflix-update`, `netflix-verify`  
+- One.com: `onecom-secure`, `onecom-billing`, `onecom-login`  
+- SES‑phishing: `miportal-ggs`, `amazonses`  
+- Obfuskerede navne: `easy%park`, `one-com`, `nflx` 
+
 
 ### ✔ Rspamd 4.1.5 kompatibel
 Ingen brug af `task:get_symbols()` eller `task:get_results()`.
