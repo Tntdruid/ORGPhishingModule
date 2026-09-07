@@ -120,6 +120,4 @@ MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction...
-# Changelog – Netflix Brand Detection
-Alle væsentlige ændringer relateret til Netflix‑brandet i ORG_PHISHING‑modulet.
 
