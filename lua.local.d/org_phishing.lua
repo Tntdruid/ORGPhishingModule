@@ -14,15 +14,9 @@ rspamd_config:register_symbol({
     local matched = false
     local matched_brand = nil
 
-    ----------------------------------------------------------------------
-    -- SAFE SUBJECT
-    ----------------------------------------------------------------------
     local subject_raw = task:get_header("Subject")
     local subject = subject_raw and tostring(subject_raw):lower() or ""
 
-    ----------------------------------------------------------------------
-    -- SAFE BODY
-    ----------------------------------------------------------------------
     local body = ""
     local raw = task:get_rawbody()
     if raw then body = body .. " " .. tostring(raw) end
@@ -30,23 +24,27 @@ rspamd_config:register_symbol({
     if c then body = body .. " " .. tostring(c) end
     body = body:lower()
 
-    ----------------------------------------------------------------------
-    -- SAFE FROM HEADER
-    ----------------------------------------------------------------------
     local from = task:get_from("mime")
     if not from or not from[1] then return false end
 
     local dn = tostring(from[1].name or ""):lower()
     local addr = tostring(from[1].addr or ""):lower()
 
-    ----------------------------------------------------------------------
-    -- Legit domain lists
-    ----------------------------------------------------------------------
     local legit = {
-      ORG_POSTNORD   = { "postnord.dk","postnord.se","postnord.com","postnord.no","postnord.fi" },
+      ORG_POSTNORD = {
+        "postnord.dk","postnord.se","postnord.com","postnord.no","postnord.fi",
+        "em%d+%.postnord.com",
+        "postnord-com.sendgrid.net"
+      },
+
       ORG_DHL        = { "dhl.com","dhl.de","dhl.dk","dhl.se","dhl.fi","dhl.no" },
       ORG_GLS        = { "gls.dk","gls.eu","gls-group.eu" },
-      ORG_EASYPARK   = { "easypark.net","easypark.dk","easypark.se","easypark.no","easypark.fi","easyparkapp.com","easyparkgroup.com" },
+
+      ORG_EASYPARK   = {
+        "easypark.net","easypark.dk","easypark.se","easypark.no","easypark.fi",
+        "easyparkapp.com","easyparkgroup.com"
+      },
+
       ORG_SKAT       = { "skat.dk","virk.dk","borger.dk","nemlogin.dk","mitid.dk" },
       ORG_BROBIZZ    = { "brobizz.dk","brobizz.com","brobizz.no","brobizz.se" },
       ORG_MOBILEPAY  = { "mobilepay.dk","mobilepay.fi","mobilepay.no","mobilepay.se" },
@@ -55,8 +53,20 @@ rspamd_config:register_symbol({
       ORG_NEMID      = { "nemid.nu","nemlogin.dk","borger.dk","virk.dk" },
       ORG_NETS       = { "nets.eu","nets.dk","nets.no","nets.se","nets.fi" },
       ORG_TDC        = { "tdc.dk","tdcgroup.com" },
+
       ORG_TELIA      = { "telia.dk","telia.se","telia.no","telia.fi","telia.lt" },
-      ORG_YOUSEE     = { "yousee.dk","yousee.tv" },
+
+      ORG_YOUSEE     = {
+        "yousee.dk",
+        "yousee.tv",
+        "info%.yousee.dk",
+        "mail%.yousee.dk",
+        "em%d+%.yousee.dk",
+        "yousee%.mkt%-mail%.com",
+        "yousee%.mkt%-cloud%.com",
+        "tdc%.dk"
+      },
+
       ORG_POSTA      = { "posten.no","postnord.no","bring.no" },
       ORG_BRING      = { "bring.no","bring.dk","bring.se","bring.fi" },
       ORG_UPS        = { "ups.com","ups.dk","ups.se","ups.no","ups.fi" },
@@ -69,32 +79,27 @@ rspamd_config:register_symbol({
         "netflix.com","netflix.net","nflxext.com","nflximg.com","nflxvideo.net"
       },
 
-      -- One.com
       ORG_ONECOM = {
         "one.com","one.dk","one.net","onecloud.com"
       }
     }
 
-    ----------------------------------------------------------------------
-    -- Helper: domain whitelist check
-    ----------------------------------------------------------------------
     local function domain_ok(addr, list)
       for _,d in ipairs(list) do
-        if addr:match("@" .. d:gsub("%.", "%%.")) then return true end
+        if d:match("%%") or d:match("%d") then
+          if addr:match("@" .. d) then return true end
+        else
+          if addr:match("@" .. d:gsub("%.", "%%.")) then return true end
+        end
       end
       return false
     end
 
-    ----------------------------------------------------------------------
-    -- Brand patterns → subsymbol mapping
-    ----------------------------------------------------------------------
     local brand_map = {
       { pat = "postnord",        sym = "ORG_POSTNORD" },
       { pat = "dhl",             sym = "ORG_DHL" },
       { pat = "gls",             sym = "ORG_GLS" },
-
       { pat = "easy[%s%-]*park", sym = "ORG_EASYPARK" },
-
       { pat = "skat",            sym = "ORG_SKAT" },
       { pat = "skattestyrelsen", sym = "ORG_SKAT" },
       { pat = "brobizz",         sym = "ORG_BROBIZZ" },
@@ -110,20 +115,13 @@ rspamd_config:register_symbol({
       { pat = "bring",           sym = "ORG_BRING" },
       { pat = "ups",             sym = "ORG_UPS" },
       { pat = "fedex",           sym = "ORG_FEDEX" },
-
       { pat = "punktum",         sym = "ORG_PUNKTUM" },
       { pat = "sygeforsikring",  sym = "ORG_SYGEFORSIKRING" },
       { pat = "danmark",         sym = "ORG_SYGEFORSIKRING" },
-
       { pat = "netflix",         sym = "ORG_NETFLIX" },
-
-      -- One.com
       { pat = "one[%s%-]*com",   sym = "ORG_ONECOM" }
     }
 
-    ----------------------------------------------------------------------
-    -- 1) Display name mismatch → brand subsymbols
-    ----------------------------------------------------------------------
     for _,b in ipairs(brand_map) do
       if dn:match(b.pat) then
         local whitelist = legit[b.sym]
@@ -135,32 +133,18 @@ rspamd_config:register_symbol({
       end
     end
 
-    ----------------------------------------------------------------------
-    -- 2) URL phishing heuristics (incl. EasyPark + SES + Netflix + One.com)
-    ----------------------------------------------------------------------
     local urls = task:get_urls() or {}
     local bad_patterns = {
       "postnord","dhl","gls",
       "easy[%s%-]*park",
       "easypark%-secure","easypark%-payment","easypark%-verify","easypark%-login","easypark%-billing",
       "miportal%-ggs","amazonses",
-
       "skat","brobizz","mobilepay","e%-boks",
       "mitid","nemid","nets","tdc","telia","yousee",
       "posten","bring","ups","fedex",
       "punktum","sygeforsikring","danmark",
-
       "netflix","netflix%-secure","netflix%-billing","netflix%-update","netflix%-verify","netflix%-login","nflx",
-
-      -- One.com
-      "one[%s%-]*com",
-      "onecom%-secure",
-      "onecom%-billing",
-      "onecom%-update",
-      "onecom%-verify",
-      "onecom%-login",
-      "one%-com",
-
+      "one[%s%-]*com","onecom%-secure","onecom%-billing","onecom%-update","onecom%-verify","onecom%-login","one%-com",
       "secure","verify","betaling","refund","update","login","track","delivery"
     }
 
@@ -174,9 +158,6 @@ rspamd_config:register_symbol({
       end
     end
 
-    ----------------------------------------------------------------------
-    -- 3) Brand‑specifik DKIM policy
-    ----------------------------------------------------------------------
     local dkim = task:get_symbol("DKIM_TRACE") or {}
     local dkim_status = nil
 
@@ -201,11 +182,12 @@ rspamd_config:register_symbol({
         ORG_BRING = true, ORG_UPS = true, ORG_FEDEX = true, ORG_POSTA = true,
         ORG_PUNKTUM = true,
         ORG_NETFLIX = true,
-        ORG_ONECOM = true
+        ORG_ONECOM = true,
+        ORG_YOUSEE = true
       }
 
       local low = {
-        ORG_TDC = true, ORG_TELIA = true, ORG_YOUSEE = true,
+        ORG_TDC = true, ORG_TELIA = true,
         ORG_EASYPARK = true, ORG_BROBIZZ = true
       }
 
@@ -221,9 +203,6 @@ rspamd_config:register_symbol({
       end
     end
 
-    ----------------------------------------------------------------------
-    -- 4) Brand-specifik urgency patterns
-    ----------------------------------------------------------------------
     if matched_brand then
       local urgency_patterns = {
 
@@ -297,7 +276,9 @@ rspamd_config:register_symbol({
         },
 
         ORG_YOUSEE = {
-          "yousee betaling mangler","yousee konto låst"
+          "yousee betaling mangler","yousee konto låst",
+          "verify your yousee account","update your yousee payment",
+          "yousee faktura","yousee invoice"
         },
 
         ORG_NETFLIX = {
@@ -327,9 +308,6 @@ rspamd_config:register_symbol({
       end
     end
 
-    ----------------------------------------------------------------------
-    -- Final decision
-    ----------------------------------------------------------------------
     if matched then return true end
     return false
   end
