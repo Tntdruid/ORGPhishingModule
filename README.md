@@ -18,77 +18,148 @@
   <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square">
 </p>
 
-# ORG Phishing Detection Module for Rspamd
+# ORG Phishing Detection Module
+### Advanced brand‑based phishing detection for Rspamd 4.1.5+
 
-Et avanceret brand‑baseret phishing‑modul til **Rspamd 4.1.5+**, designet til at opdage mails der udgiver sig for at være kendte danske og internationale tjenester.  
-Modulet matcher display‑name, afsenderdomæne, URL‑mønstre, DKIM‑status og brand‑specifikke urgency‑mønstre.
+Dette modul identificerer phishing‑mails, der udgiver sig for at være kendte brands.  
+Det matcher display‑navne, domæner, URL‑mønstre, DKIM‑status, urgency‑fraser og brand‑specifikke heuristikker.
+
+Modulet er designet til produktion og understøtter både danske og internationale brands, inkl. PostNord, YouSee, Brobizz, Hetzner, Elgiganten, Netflix, One.com, EasyPark og mange flere.
+
+---
 
 ## Features
 
+- Brand‑baseret phishingdetektion  
+- Display‑name mismatch detection  
+- Domæne‑whitelist med wildcard‑patterns  
+- URL‑heuristik for brand‑spoofing  
+- DKIM‑policy pr. brand (critical / medium / low)  
+- Brand‑specifikke urgency‑mønstre  
+- Understøtter SendGrid, Responsys, marketing‑domæner og relay‑subdomæner  
+- Ingen deprecated Rspamd API  
+- Kompatibel med Rspamd 4.1.5+
+
+---
 
 ## Understøttede brands
 
-### Danske brands
+### Danske og nordiske tjenester
 - SKAT  
 - MitID  
 - NemID  
 - MobilePay  
 - e‑Boks  
 - Nets  
+- Sygeforsikring Danmark  
+- Punktum.dk  
 - TDC  
 - Telia  
 - YouSee  
-- Punktum.dk  
-- Sygeforsikring Danmark  
 - One.com  
 
-### Levering & logistik
+### Hosting & Cloud
+- Hetzner (robot, abuse, cloud, support)
+
+### E‑commerce & retail
+- Elgiganten
+
+### Transport & levering
 - PostNord  
 - DHL  
 - GLS  
 - Bring  
-- Posta Norge  
+- Posta  
 - UPS  
 - FedEx  
 
-### Transport & betaling
+### Betaling & parkering
 - EasyPark  
-- BroBizz  
+- Brobizz  
 
 ### Streaming
 - Netflix  
 
 ---
 
-## DKIM‑policy pr. brand
+## Whitelist‑logik
 
-**Kritisk:**  
-MitID, NemID, MobilePay, e‑Boks, Nets, Sygeforsikring Danmark
+Modulet indeholder en avanceret domæne‑whitelist med wildcard‑patterns:
 
-**Medium:**  
-PostNord, DHL, GLS, Bring, UPS, FedEx, Posta, Punktum.dk, Netflix, One.com
+- `em%d+%.postnord.com`  
+- `em%d+%.yousee.dk`  
+- `em%d+%.brobizz.com`  
+- `o%d%.email%.brobizz.dk`  
+- `em%d+%.elgiganten.dk`  
+- `robot%.hetzner%.com`  
+- `abuse%.hetzner%.de`  
+- `support%.hetzner%.com`  
 
-**Lav:**  
-TDC, Telia, YouSee, EasyPark, BroBizz
+Dette sikrer at legitime mails fra SendGrid, Responsys, marketing‑platforme og relay‑systemer **ikke** bliver tagget som phishing.
 
 ---
 
 ## URL‑heuristik
 
-Modulet matcher brand‑relaterede phishing‑URL’er, inkl.:
+Modulet matcher brand‑relaterede phishing‑URL’er, fx:
 
-- EasyPark: `easypark-secure`, `easypark-payment`, `easypark-login`  
-- Netflix: `netflix-billing`, `netflix-update`, `netflix-verify`  
-- One.com: `onecom-secure`, `onecom-billing`, `onecom-login`  
+- `easypark-secure`, `easypark-payment`, `easypark-login`  
+- `netflix-billing`, `netflix-update`, `netflix-verify`  
+- `onecom-secure`, `onecom-billing`, `onecom-login`  
+- `hetzner-robot`, `hetzner-cloud`, `hetzner-billing`  
+- `elgiganten-order`, `elgiganten-tracking`  
 - SES‑phishing: `miportal-ggs`, `amazonses`  
-- Obfuskerede navne: `easy%park`, `one-com`, `nflx` 
-
-
-### ✔ Rspamd 4.1.5 kompatibel
-Ingen brug af `task:get_symbols()` eller `task:get_results()`.
+- Obfuskerede navne: `one-com`, `nflx`, `easy%park`
 
 ---
 
+## DKIM‑policy
+
+### Critical brands
+- SKAT  
+- MitID  
+- NemID  
+- MobilePay  
+- e‑Boks  
+- Nets  
+- Sygeforsikring Danmark  
+
+### Medium brands
+- PostNord  
+- DHL  
+- GLS  
+- Bring  
+- UPS  
+- FedEx  
+- Posta  
+- Punktum.dk  
+- Netflix  
+- One.com  
+- YouSee  
+- Brobizz  
+- Hetzner  
+- Elgiganten  
+
+### Low brands
+- TDC  
+- Telia  
+- EasyPark  
+
+---
+
+## Urgency‑mønstre
+
+Modulet indeholder brand‑specifikke urgency‑fraser, fx:
+
+- “din Netflix betaling er afvist”  
+- “one.com domain expires”  
+- “verify your Hetzner account”  
+- “din Elgiganten ordre er på vej”  
+- “brobizz betaling mangler”  
+- “din pakke er tilbageholdt”  
+- “verify your account”  
+
+---
 ## Installation
 
 ### 1. Lua‑fil
