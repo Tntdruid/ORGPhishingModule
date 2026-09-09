@@ -173,9 +173,9 @@ rspamd_config:register_symbol({
     end
 
     ----------------------------------------------------------------------
-    -- URL HEURISTICS (get_text_urls FIX APPLIED)
+    -- URL HEURISTICS (Rspamd 4.1.5 compatible: get_uri())
     ----------------------------------------------------------------------
-    local urls = task:get_text_urls() or {}
+    local urls = task:get_uri() or {}
 
     local bad_patterns = {
       "postnord","dhl","gls",
